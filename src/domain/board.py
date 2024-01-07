@@ -6,13 +6,14 @@ class Board:
     def __init__(self):
         self.__data = [['~' for _ in range(10)] for _ in range(10)]
         self.total_hits = 0
+        self.ships = {}
 
     def __str__(self):
-        board_representation ='   ' + ' '.join([chr(i) for i in range(ord('A'), ord('K'))]) + '\n'
+        board_representation =Fore.MAGENTA + '   ' + ' '.join([chr(i) for i in range(ord('A'), ord('K'))]) + Fore.RESET+'\n'
 
         for i in range(len(self.__data)):
             row_num = str(i + 1).ljust(2)  # Left-align the row number in a 2-character field
-            board_representation += row_num + ' ' + ' '.join(self.__data[i]) + '\n'
+            board_representation += Fore.MAGENTA + row_num + Fore.RESET + ' ' + ' '.join(self.__data[i]) + '\n'
 
         return board_representation
 
@@ -52,6 +53,8 @@ class Board:
         """
         Check if the ship placement is valid (no overlap and within bounds) assuming row1 , col1 < row2, col2
         """
+        if any(x > 9 or x < 0 for x in [row1, col1, row2, col2]):
+            return False
         if row1 == row2:
             for col in range(col1, col2 + 1):
                 if self.__data[row1][col] != '~':
@@ -62,13 +65,26 @@ class Board:
                     return False
         return True
 
-    def place_ship(self, coords1: str, coords2: str):
+    def place_ship(self, coords1: str, coords2: str,ship_name):
+        ship_lengths = {
+            'Carrier': 5,
+            'Battleship': 4,
+            'Destroyer': 3,
+            'Submarine': 3,
+            'Patrol Boat': 2
+        }
+
         row1, col1 = self.convert_coordinates(coords1)
         row2, col2 = self.convert_coordinates(coords2)
 
         # Swap coordinates if necessary to simplify logic
         if row1 == row2 and col1 > col2 or col1 == col2 and row1 > row2:
             row1, col1, row2, col2 = row2, col2, row1, col1
+
+        actual_length = self.get_length_between_coords(coords1, coords2)
+        required_length = ship_lengths[ship_name]
+        if actual_length != required_length:
+            raise ValueError(f"Invalid length for {ship_name}: Expected {required_length}, got {actual_length}.\n")
 
         # Check for valid placement
         if not self.is_valid_placement(row1, col1, row2, col2):
@@ -83,7 +99,15 @@ class Board:
         else:
             raise ValueError("Invalid Coordinates! You can only place a ship horizontally or vertically.\n")
 
-    def get_lenght_between_coords(self,coords1,coords2):
+        # Add ship details to the tracking system
+        self.ships[ship_name] = {
+            'start_coord': (row1, col1),
+            'end_coord': (row2, col2),
+            'length': self.get_length_between_coords(coords1, coords2),
+            'hits': 0
+        }
+
+    def get_length_between_coords(self, coords1, coords2):
         """
         Get's the lenght in cells between 2 inputs
         :param coords1:
@@ -102,7 +126,34 @@ class Board:
         elif col1==col2:
             return row2-row1+1
         else:
-            raise ValueError("Invalid Coordinates! You can only place a ship horizontally or vertically.")
+            raise ValueError("Invalid Coordinates! You can only place a ship horizontally or vertically.\n")
+
+    def increment_hit_count(self, coords):
+        row, col = self.convert_coordinates(coords)
+        for ship_info in self.ships.values():
+            if self.is_within_ship(row, col, ship_info):
+                ship_info['hits'] += 1
+                break
+    def check_if_ship_sunk(self, coords):
+        row, col = self.convert_coordinates(coords)
+        for ship_name, ship_info in self.ships.items():
+            if self.is_within_ship(row, col, ship_info) and ship_info['hits'] == ship_info['length']:
+                return ship_name
+        return None
+
+    def is_ship_sunk(self, coords):
+        row, col = self.convert_coordinates(coords)
+        for ship_info in self.ships.values():
+            if self.is_within_ship(row, col, ship_info):
+                if ship_info['hits'] == ship_info['length']:
+                    return True
+        return False
+
+    def is_within_ship(self, row, col, ship_info):
+        start_row, start_col = ship_info['start_coord']
+        end_row, end_col = ship_info['end_coord']
+        return (start_row <= row <= end_row) and (start_col <= col <= end_col)
+
     def is_game_over(self):
         return self.total_hits == 17
 
@@ -110,16 +161,19 @@ class HiddenEnemyBoard(Board):
     def __init__(self,enemy_board:Board):
         super().__init__()
         self.enemy_board=enemy_board
-    def hit(self,coords):
+    def hit(self, coords):
         if not self.is_valid_hit(coords):
-            raise ValueError("You already hit this cell! Take another guess!")
-        if self.enemy_board.get_value(coords)== 'S':
-            self.set_value(coords,Fore.RED + 'X' + Fore.RESET)
+            raise ValueError("You already hit this cell! Take another guess!\n")
+
+        if self.enemy_board.get_value(coords) == 'S':
+            self.enemy_board.increment_hit_count(coords)
+            self.set_value(coords, Fore.RED + 'X' + Fore.RESET)
             self.enemy_board.total_hits += 1
             return True
         else:
-            self.set_value(coords,'X')
+            self.set_value(coords, 'X')
             return False
+
     def is_valid_hit(self,coords):
         return self.get_value(coords)=='~'
 
