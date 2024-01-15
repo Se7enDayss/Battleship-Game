@@ -10,6 +10,10 @@ class ComputerBoard(Board):
         super().__init__()
         self.place_random_ships()
     def place_random_ships(self):
+        """
+        The function places random ships on the computer board
+        :return:
+        """
         ships = {'Carrier': 5, 'Battleship': 4, 'Destroyer': 3, 'Submarine': 3, 'Patrol Boat': 2}
         for ship_name, length in ships.items():
             placed = False
@@ -22,7 +26,14 @@ class ComputerBoard(Board):
                     placed = True
 
     def can_place_ship(self, row, col, length, horizontal):
-        # Check if the ship can be placed at the given starting position
+        """
+        Check if the ship can be placed at a specific starting coord, considering the orientation
+        :param row:
+        :param col:
+        :param length:
+        :param horizontal:
+        :return:
+        """
         if horizontal:
             if col + length > 10:
                 return False

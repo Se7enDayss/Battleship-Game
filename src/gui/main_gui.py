@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import messagebox, font
 from PIL import Image, ImageTk
+import pygame
 
 from colorama import Fore
 
@@ -13,6 +14,24 @@ class BattleshipGUI:
         self.master = master
         master.title("Battleship Game")
         master.geometry('600x450')
+
+
+        # Load and play background music
+        pygame.mixer.init()
+        self.sound_on = True
+
+        # Sound on/off button
+        self.sound_button = tk.Button(master, text="Sound On", command=self.toggle_sound,font=('Rockwell extra bold',12))
+        self.sound_button.place(relx=0.98, rely=0.98, anchor='se')
+
+        self.background_music=pygame.mixer.Sound(r'D:\Python Projects\GitHub\a10-Se7enDayss\music.mp3')
+        self.background_music.play(-1)
+        self.hit_music=pygame.mixer.Sound(r'D:\Python Projects\GitHub\a10-Se7enDayss\explosion.mp3')
+        self.splash_music=pygame.mixer.Sound(r'D:\Python Projects\GitHub\a10-Se7enDayss\splash.mp3')
+        self.background_music.set_volume(0.1)
+        self.splash_music.set_volume(0.2)
+        self.hit_music.set_volume(1)
+
 
         self.player_board_gui = None
         self.player_hidden_board_gui = None
@@ -68,6 +87,16 @@ class BattleshipGUI:
         self.exit_button = tk.Button(master, text="EXIT", bg='red',font=button_font, command=self.exit_game)
         self.exit_button.pack(pady=10, padx=20, ipadx=30, ipady=10)
 
+    def toggle_sound(self):
+        if self.sound_on:
+            pygame.mixer.pause()
+            self.sound_button.config(text="Sound Off")
+            self.sound_on = False
+        else:
+            pygame.mixer.unpause()
+            self.sound_button.config(text="Sound On")
+            self.sound_on = True
+
     def start_game(self):
         self.master.geometry('')
         self.background_label.place_forget()
@@ -86,7 +115,7 @@ class BattleshipGUI:
         self.process_turn()
 
         # Checking the 'you won' message
-        self.computer_board.total_hits = 17
+        #self.computer_board.total_hits = 17
 
     def you_won_message(self):
         self.start_button.pack_forget()
@@ -145,6 +174,9 @@ class BattleshipGUI:
             self.player_guess_label.config(text=f"You chose: {row + 1}{chr(col + ord('A'))}",font=('Rockwell extra bold',14))
             self.player_guess_label.pack(pady=(0,10))
             if hit_result:
+                if self.sound_on:
+                    self.hit_music.play()
+
                 self.player_result_label.config(text="You hit one of the ships!",fg='green',font=('Rockwell extra bold',22))
                 self.player_result_label.pack(pady=20)
                 sunk_ship = self.computer_board.check_if_ship_sunk(f"{row + 1}{chr(col + ord('A'))}")
@@ -153,13 +185,15 @@ class BattleshipGUI:
                     self.player_sunk_label.pack(pady=10)
 
             else:
+                if self.sound_on:
+                    self.splash_music.play()
                 self.player_result_label.config(text="You missed!", fg="red",font=('Rockwell extra bold',22))
                 self.player_result_label.pack(pady=20)
 
             self.player_hidden_board_gui.update_board()
 
             self.is_player_turn = False
-            self.master.after(3000, self.process_turn)
+            self.master.after(1000, self.process_turn)
         except ValueError as e:
             messagebox.showerror("Error", str(e))
             self.player_hidden_board_gui.enable_cell_clicks(self.enemy_cell_clicked)
@@ -172,6 +206,9 @@ class BattleshipGUI:
         self.computer_guess_label.pack(pady=(0,10))
 
         if self.player_board.get_value(coords) == Fore.RED + 'S' + Fore.RESET:
+            if self.sound_on:
+                self.hit_music.play()
+
             self.computer_result_label.config(text="Computer hit one of your ships!", fg="red",font=('Rockwell extra bold',22))
             self.computer_result_label.pack(pady=20)
             self.player_board_gui.update_board_with_players_ships()
@@ -181,11 +218,16 @@ class BattleshipGUI:
                 self.computer_sunk_label.config(text=f"Computer has sunk your {sunk_ship}!", fg="orange",font=('Rockwell extra bold',16))
                 self.computer_sunk_label.pack(pady=10)
         else:
+            if self.sound_on:
+                self.splash_music.play()
+
+            self.player_board.set_value(coords,'X')
+            self.player_board_gui.update_board_with_players_ships()
             self.computer_result_label.config(text="Computer missed!", fg="green",font=('Rockwell extra bold',22))
             self.computer_result_label.pack(pady=20)
 
         self.is_player_turn = True
-        self.master.after(3000, self.process_turn)
+        self.master.after(1000, self.process_turn)
 
     def update_ship_placement_info(self, info):
         if hasattr(self, 'ship_placement_info_label'):

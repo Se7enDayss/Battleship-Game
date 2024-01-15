@@ -95,7 +95,7 @@ class MainUI:
                 print(Fore.CYAN + "STARTING GAME..." + Fore.RESET)
                 while True:
                     self.print_boards_side_by_side(board,hidden_board)
-                    print (computer_board) # DEBUGGING PURPOSES
+                    #print (computer_board) # DEBUGGING PURPOSES
                     #print(computer_hidden_board) # DEBUGGING PURPOSES
                     self.ui_try_hit(hidden_board,computer_board)
                     if self.check_game_over(board, computer_board):

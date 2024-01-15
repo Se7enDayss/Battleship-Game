@@ -34,9 +34,9 @@ class TestBoard(TestCase):
         self.assertFalse(self.board.is_valid_placement(0, 0, 0, 10))
 
     def test_place_ship(self):
-        self.board.place_ship('1A', '1D', 'Destroyer')
+        self.board.place_ship('1A', '1C', 'Destroyer')
         self.assertEqual(self.board.get_value('1A'), 'S')
-        self.assertEqual(self.board.get_value('1D'), 'S')
+        self.assertEqual(self.board.get_value('1C'), 'S')
         self.assertIn('Destroyer', self.board.ships)
 
     def test_get_length_between_coords(self):
@@ -44,24 +44,24 @@ class TestBoard(TestCase):
         self.assertEqual(self.board.get_length_between_coords('1A', '4A'), 4)
 
     def test_increment_hit_count(self):
-        self.board.place_ship('1A', '1D', 'Destroyer')
+        self.board.place_ship('1A', '1C', 'Destroyer')
         self.board.increment_hit_count('1A')
         self.assertEqual(self.board.ships['Destroyer']['hits'], 1)
 
     def test_check_if_ship_sunk(self):
-        self.board.place_ship('1A', '1D', 'Destroyer')
-        for coord in ['1A', '1B', '1C', '1D']:
+        self.board.place_ship('1A', '1C', 'Destroyer')
+        for coord in ['1A', '1B', '1C']:
             self.board.increment_hit_count(coord)
-        self.assertEqual(self.board.check_if_ship_sunk('1D'), 'Destroyer')
+        self.assertEqual(self.board.check_if_ship_sunk('1C'), 'Destroyer')
 
     def test_is_ship_sunk(self):
-        self.board.place_ship('1A', '1D', 'Destroyer')
-        for coord in ['1A', '1B', '1C', '1D']:
+        self.board.place_ship('1A', '1C', 'Destroyer')
+        for coord in ['1A', '1B', '1C']:
             self.board.increment_hit_count(coord)
-        self.assertTrue(self.board.is_ship_sunk('1D'))
+        self.assertTrue(self.board.is_ship_sunk('1C'))
 
     def test_is_within_ship(self):
-        self.board.place_ship('1A', '1D', 'Destroyer')
+        self.board.place_ship('1A', '1C', 'Destroyer')
         self.assertTrue(self.board.is_within_ship(0, 0, self.board.ships['Destroyer']))
 
     def test_is_game_over(self):
